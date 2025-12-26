@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          'react': path.resolve(__dirname, 'node_modules/react'), // Force react to use the root node_modules version
+          'react-dom': path.resolve(__dirname, 'node_modules/react-dom'), // Force react-dom to use the root node_modules version
         }
       }
     };
