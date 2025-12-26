@@ -5,7 +5,6 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
-      base: '/', // Added for correct asset loading in deployment
       server: {
         port: 3000,
         host: '0.0.0.0',
@@ -18,9 +17,6 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
-          'react': path.resolve(__dirname, 'node_modules/react'),
-          'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-          'react-dom/client': path.resolve(__dirname, 'node_modules/react-dom/client'),
         }
       }
     };

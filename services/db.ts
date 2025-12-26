@@ -1,39 +1,78 @@
-import { Product, Settings, Transaction, Customer } from '../types';
-import { supabase } from '../src/integrations/supabase/client';
 
-// Note: The local storage functions are now deprecated and will be removed.
-// All data operations will go through Supabase.
-// The default data is now handled by Supabase seeds and new user settings trigger.
+import { Product, Settings, Transaction, Customer } from '../types';
+
+const STORAGE_KEYS = {
+  PRODUCTS: 'imanager_products',
+  SETTINGS: 'imanager_settings',
+  TRANSACTIONS: 'imanager_transactions',
+  CUSTOMERS: 'imanager_customers'
+};
+
+const DEFAULT_PRODUCTS: Product[] = [
+  {
+    id: '1',
+    sku: 'IPH15P-128-NAT',
+    model: 'iPhone 15 Pro',
+    storage: '128GB',
+    color: 'Natural Titanium',
+    condition: 'Nuevo',
+    battery: 100,
+    stock: 5,
+    price_sell_usd: 1100,
+    price_tradein_usd: 850,
+    notes: 'Sellado en caja'
+  },
+  {
+    id: '2',
+    sku: 'IPH14-256-BLU',
+    model: 'iPhone 14',
+    storage: '256GB',
+    color: 'Blue',
+    condition: 'Como Nuevo',
+    battery: 92,
+    stock: 2,
+    price_sell_usd: 750,
+    price_tradein_usd: 550,
+    notes: 'Impecable, sin detalles'
+  }
+];
+
+const DEFAULT_SETTINGS: Settings = {
+  usd_rate: 1250,
+  updated_at: new Date().toISOString(),
+  default_warranty_days: 30
+};
 
 export const db = {
-  // These functions are now placeholders or will be removed as data is fetched directly in App.tsx
-  // For now, they return empty arrays or default settings to avoid breaking existing components
   getProducts: (): Product[] => {
-    console.warn("db.getProducts() is deprecated. Fetch products directly from Supabase.");
-    return [];
+    const data = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    return data ? JSON.parse(data) : DEFAULT_PRODUCTS;
   },
   saveProducts: (products: Product[]) => {
-    console.warn("db.saveProducts() is deprecated. Save products directly to Supabase.");
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
   },
   getSettings: (): Settings => {
-    console.warn("db.getSettings() is deprecated. Fetch settings directly from Supabase.");
-    return { user_id: '', usd_rate: 1000, updated_at: '', default_warranty_days: 30 };
+    const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    const parsed = data ? JSON.parse(data) : DEFAULT_SETTINGS;
+    // Ensure default_warranty_days exists for legacy installs
+    if (parsed.default_warranty_days === undefined) parsed.default_warranty_days = 30;
+    return parsed;
   },
   saveSettings: (settings: Settings) => {
-    console.warn("db.saveSettings() is deprecated. Save settings directly to Supabase.");
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   },
   getTransactions: (): Transaction[] => {
-    console.warn("db.getTransactions() is deprecated. Fetch transactions directly from Supabase.");
-    return [];
+    const data = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+    return data ? JSON.parse(data) : [];
   },
   saveTransactions: (transactions: Transaction[]) => {
-    console.warn("db.saveTransactions() is deprecated. Save transactions directly to Supabase.");
+    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
   },
   getCustomers: (): Customer[] => {
-    console.warn("db.getCustomers() is deprecated. Fetch customers directly from Supabase.");
-    return [];
+    const data = localStorage.getItem(STORAGE_KEYS.CUSTOMERS);
+    return data ? JSON.parse(data) : [];
   },
   saveCustomers: (customers: Customer[]) => {
-    console.warn("db.saveCustomers() is deprecated. Save customers directly to Supabase.");
+    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
   }
 };
