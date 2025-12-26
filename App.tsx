@@ -12,10 +12,10 @@ import Settings from './components/Settings';
 import Customers from './components/Customers';
 import Warranties from './components/Warranties';
 import CustomerDetail from './components/CustomerDetail';
-import Login from './pages/Login';
+import Login from './src/pages/Login'; // Corrected import path
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { SessionContextProvider, useSession } from './components/SessionContextProvider';
-import { supabase } from './integrations/supabase/client';
+import { SessionContextProvider, useSession } from './src/components/SessionContextProvider';
+import { supabase } from './src/integrations/supabase/client';
 
 const AuthenticatedApp: React.FC = () => {
   const { userId } = useSession();
