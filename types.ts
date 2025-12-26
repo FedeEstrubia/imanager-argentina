@@ -26,14 +26,16 @@ export interface Product {
   price_sell_usd: number;
   price_tradein_usd: number;
   notes: string;
+  created_at?: string; // Supabase will add this automatically
 }
 
 export interface Settings {
-  id?: string; // Added for Supabase primary key
+  id: string; // Added for Supabase primary key
   user_id: string; // Added for multi-user support
   usd_rate: number;
   updated_at: string;
   default_warranty_days: number;
+  created_at?: string; // Supabase will add this automatically
 }
 
 export interface Transaction {
@@ -58,6 +60,7 @@ export interface Transaction {
   warranty_start?: string;
   warranty_end?: string;
   payment_method?: string; // Added payment_method
+  created_at?: string; // Supabase will add this automatically
 }
 
 export type View = 'inventory' | 'tradein' | 'history' | 'settings' | 'product_form' | 'customers' | 'customer_detail' | 'warranties';
