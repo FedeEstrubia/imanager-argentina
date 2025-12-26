@@ -1,7 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { View, Product, Settings as SettingsType, Transaction, Customer } from './types';
-import { SessionContextProvider, useSession } from './src/components/SessionContextProvider'; // Corrected import path
+import { db } from './services/db';
 import Layout from './components/Layout';
 import Inventory from './components/Inventory';
 import ProductForm from './components/ProductForm';
@@ -11,233 +11,94 @@ import Settings from './components/Settings';
 import Customers from './components/Customers';
 import Warranties from './components/Warranties';
 import CustomerDetail from './components/CustomerDetail';
-import Login from './src/pages/Login'; // Corrected import path
-import { supabase } from './src/integrations/supabase/client'; // Corrected import path
-import { toast } from 'react-hot-toast';
 
-// Main application component, now wrapped in SessionContextProvider
-const AppContent: React.FC = () => {
-  const { session, user, products, settings, transactions, customers, loading, fetchUserData } = useSession();
+const App: React.FC = () => {
   const [currentView, setView] = useState<View>('inventory');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [settings, setSettings] = useState<SettingsType>({ usd_rate: 1000, updated_at: '', default_warranty_days: 30 });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  // Redirect to login if not authenticated
-  if (!session && !loading) {
-    return <Navigate to="/login" replace />;
-  }
+  useEffect(() => {
+    setProducts(db.getProducts());
+    setSettings(db.getSettings());
+    setTransactions(db.getTransactions());
+    setCustomers(db.getCustomers());
+  }, []);
 
-  // Show loading state while data is being fetched
-  if (loading || !user || !settings) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <p className="text-slate-600">Cargando datos...</p>
-      </div>
-    );
-  }
-
-  const userId = user.id;
-
-  const handleUpdateSettings = async (rate: number, warrantyDays: number) => {
-    const newSettingsData = { 
+  const handleUpdateSettings = (rate: number, warrantyDays: number) => {
+    const newSettings = { 
         usd_rate: rate, 
         default_warranty_days: warrantyDays,
-        updated_at: new Date().toISOString(),
-        user_id: userId,
+        updated_at: new Date().toISOString() 
     };
-    const { data, error } = await supabase
-      .from('settings')
-      .update(newSettingsData)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating settings:', error);
-      toast.error('Error al guardar la configuración.');
-    } else {
-      toast.success('Configuración guardada exitosamente.');
-      fetchUserData(); // Re-fetch all user data to update state
-    }
+    setSettings(newSettings);
+    db.saveSettings(newSettings);
   };
 
-  const handleSaveProduct = async (p: Partial<Product>) => {
-    if (!userId) return;
-
-    let error;
+  const handleSaveProduct = (p: Partial<Product>) => {
+    let newProducts;
     if (editingProduct) {
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({ ...p, user_id: userId })
-        .eq('id', editingProduct.id)
-        .eq('user_id', userId); // Ensure user can only update their own products
-      error = updateError;
+      newProducts = products.map(item => item.id === editingProduct.id ? { ...item, ...p } as Product : item);
     } else {
-      const { error: insertError } = await supabase
-        .from('products')
-        .insert({ ...p, user_id: userId, created_at: new Date().toISOString() });
-      error = insertError;
+      const newProduct = { ...p, id: Date.now().toString() } as Product;
+      newProducts = [...products, newProduct];
     }
-
-    if (error) {
-      console.error('Error saving product:', error);
-      toast.error('Error al guardar el producto.');
-    } else {
-      toast.success('Producto guardado exitosamente.');
-      setEditingProduct(null);
-      setView('inventory');
-      fetchUserData(); // Re-fetch all user data to update state
-    }
+    setProducts(newProducts);
+    db.saveProducts(newProducts);
+    setEditingProduct(null);
+    setView('inventory');
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!userId) return;
-    if (confirm('¿Eliminar producto? Esta acción es irreversible.')) {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId); // Ensure user can only delete their own products
-
-      if (error) {
-        console.error('Error deleting product:', error);
-        toast.error('Error al eliminar el producto.');
-      } else {
-        toast.success('Producto eliminado exitosamente.');
-        fetchUserData(); // Re-fetch all user data to update state
-      }
-    }
-  };
-
-  const handleSaveCustomer = async (c: Partial<Customer>) => {
-    if (!userId) return;
-
-    let error;
+  const handleSaveCustomer = (c: Partial<Customer>) => {
+    let newCustomers;
     if (editingCustomer) {
-      const { error: updateError } = await supabase
-        .from('customers')
-        .update({ ...c, user_id: userId })
-        .eq('id', editingCustomer.id)
-        .eq('user_id', userId); // Ensure user can only update their own customers
-      error = updateError;
+      newCustomers = customers.map(item => item.id === editingCustomer.id ? { ...item, ...c } as Customer : item);
     } else {
-      const { error: insertError } = await supabase
-        .from('customers')
-        .insert({ ...c, user_id: userId, created_at: new Date().toISOString() });
-      error = insertError;
+      const newCust = { ...c, id: Date.now().toString(), created_at: new Date().toISOString() } as Customer;
+      newCustomers = [...customers, newCust];
     }
-
-    if (error) {
-      console.error('Error saving customer:', error);
-      toast.error('Error al guardar el cliente.');
-    } else {
-      toast.success('Cliente guardado exitosamente.');
-      setEditingCustomer(null);
-      setView('customers');
-      fetchUserData(); // Re-fetch all user data to update state
-    }
+    setCustomers(newCustomers);
+    db.saveCustomers(newCustomers);
+    setEditingCustomer(null);
+    setView('customers');
   };
 
-  const handleQuickAddCustomer = async (c: Partial<Customer>): Promise<Customer | null> => {
-    if (!userId) return null;
-    const newCustData = { ...c, user_id: userId, created_at: new Date().toISOString(), notes: 'Agregado rápido en venta.' };
-    const { data, error } = await supabase
-      .from('customers')
-      .insert(newCustData)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error quick adding customer:', error);
-      toast.error('Error al agregar cliente rápido.');
-      return null;
-    } else {
-      toast.success('Cliente agregado rápidamente.');
-      fetchUserData(); // Re-fetch all user data to update state
-      return data as Customer;
-    }
+  const handleQuickAddCustomer = (c: Partial<Customer>): Customer => {
+      const newCust = { ...c, id: Date.now().toString(), created_at: new Date().toISOString(), notes: 'Agregado rápido en venta.' } as Customer;
+      const newList = [...customers, newCust];
+      setCustomers(newList);
+      db.saveCustomers(newList);
+      return newCust;
   };
 
-  const handleDeleteCustomer = async (id: string) => {
-    if (!userId) return;
-    if (confirm("¿Eliminar cliente? Esta acción es irreversible y eliminará sus transacciones asociadas.")) {
-      const { error } = await supabase
-        .from('customers')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId); // Ensure user can only delete their own customers
-
-      if (error) {
-        console.error('Error deleting customer:', error);
-        toast.error('Error al eliminar el cliente.');
-      } else {
-        toast.success('Cliente eliminado exitosamente.');
-        fetchUserData(); // Re-fetch all user data to update state
-      }
-    }
-  };
-
-  const handleConfirmTradeIn = async (txData: Omit<Transaction, 'id' | 'date' | 'user_id'>, addToInventory: boolean) => {
-    if (!userId) return;
-
-    const newTransaction: Omit<Transaction, 'id'> = {
+  const handleConfirmTradeIn = (txData: Omit<Transaction, 'id' | 'date'>, addToInventory: boolean) => {
+    const newTransaction: Transaction = {
       ...txData,
-      user_id: userId,
-      date: new Date().toISOString(),
-      created_at: new Date().toISOString(),
+      id: Date.now().toString(),
+      date: new Date().toISOString()
     };
 
-    const { data: transactionResult, error: transactionError } = await supabase
-      .from('transactions')
-      .insert(newTransaction)
-      .select()
-      .single();
-
-    if (transactionError) {
-      console.error('Error saving transaction:', transactionError);
-      toast.error('Error al guardar la transacción.');
-      return;
-    }
-
-    // Update product stock
-    const updates = [];
-    if (txData.product_sold_id) {
-      const soldProduct = products.find(p => p.id === txData.product_sold_id);
-      if (soldProduct) {
-        updates.push(
-          supabase
-            .from('products')
-            .update({ stock: Math.max(0, soldProduct.stock - 1) })
-            .eq('id', soldProduct.id)
-            .eq('user_id', userId)
-        );
+    let newProducts = products.map(p => {
+      if (p.id === txData.product_sold_id) {
+        return { ...p, stock: Math.max(0, p.stock - 1) };
       }
-    }
-    if (addToInventory && txData.product_tradein_id) {
-      const tradeInProduct = products.find(p => p.id === txData.product_tradein_id);
-      if (tradeInProduct) {
-        updates.push(
-          supabase
-            .from('products')
-            .update({ stock: tradeInProduct.stock + 1 })
-            .eq('id', tradeInProduct.id)
-            .eq('user_id', userId)
-        );
+      if (addToInventory && p.id === txData.product_tradein_id) {
+        return { ...p, stock: p.stock + 1 };
       }
-    }
+      return p;
+    });
 
-    const updateResults = await Promise.all(updates);
-    const updateErrors = updateResults.filter(res => res.error).map(res => res.error);
+    setProducts(newProducts);
+    db.saveProducts(newProducts);
 
-    if (updateErrors.length > 0) {
-      console.error('Errors updating product stock:', updateErrors);
-      toast.error('Transacción guardada, pero hubo errores al actualizar el stock.');
-    } else {
-      toast.success('Operación confirmada exitosamente.');
-    }
+    const newTransactions = [...transactions, newTransaction];
+    setTransactions(newTransactions);
+    db.saveTransactions(newTransactions);
 
-    fetchUserData(); // Re-fetch all user data to update state
     setView('history');
   };
 
@@ -256,7 +117,13 @@ const AppContent: React.FC = () => {
               setEditingProduct(p);
               setView('product_form');
             }}
-            onDelete={handleDeleteProduct}
+            onDelete={(id) => {
+                if (confirm('¿Eliminar producto?')) {
+                    const newList = products.filter(p => p.id !== id);
+                    setProducts(newList);
+                    db.saveProducts(newList);
+                }
+            }}
           />
         );
       case 'product_form':
@@ -292,24 +159,21 @@ const AppContent: React.FC = () => {
                 onAdd={() => {
                     setEditingCustomer(null);
                     // For simplicity, reusing a standard alert-prompt for creation if needed or add a full form
-                    const firstName = prompt("Nombre del cliente:");
-                    if(firstName) {
-                      const lastName = prompt("Apellido del cliente:") || '';
-                      const phone = prompt("Teléfono del cliente:") || '';
-                      handleSaveCustomer({ first_name: firstName, last_name: lastName, phone: phone });
-                    }
+                    // But here we'll simulate jumping to a detail/edit view
+                    const name = prompt("Nombre del cliente:");
+                    if(name) handleSaveCustomer({ first_name: name, phone: prompt("Teléfono:") || "" });
                 }}
                 onEdit={(c) => {
-                    setEditingCustomer(c);
-                    // For simplicity, reusing a standard alert-prompt for creation if needed or add a full form
-                    const firstName = prompt("Nuevo nombre:", c.first_name);
-                    if(firstName) {
-                      const lastName = prompt("Nuevo apellido:", c.last_name) || '';
-                      const phone = prompt("Nuevo teléfono:", c.phone) || '';
-                      handleSaveCustomer({ ...c, first_name: firstName, last_name: lastName, phone: phone });
+                    const name = prompt("Nuevo nombre:", c.first_name);
+                    if(name) handleSaveCustomer({ ...c, first_name: name });
+                }}
+                onDelete={(id) => {
+                    if(confirm("¿Eliminar cliente?")) {
+                        const newList = customers.filter(c => c.id !== id);
+                        setCustomers(newList);
+                        db.saveCustomers(newList);
                     }
                 }}
-                onDelete={handleDeleteCustomer}
                 onViewDetail={(c) => {
                     setSelectedCustomer(c);
                     setView('customer_detail');
@@ -335,20 +199,6 @@ const AppContent: React.FC = () => {
     <Layout currentView={currentView} setView={setView} usdRate={settings.usd_rate}>
       {renderView()}
     </Layout>
-  );
-};
-
-const App: React.FC = () => {
-  return (
-    <Router>
-      <SessionContextProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<AppContent />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </SessionContextProvider>
-    </Router>
   );
 };
 
