@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { View, Product, Settings as SettingsType, Transaction, Customer } from './types';
-import { SessionContextProvider, useSession } from './components/SessionContextProvider';
+import { SessionContextProvider, useSession } from './src/components/SessionContextProvider'; // Corrected import path
 import Layout from './components/Layout';
 import Inventory from './components/Inventory';
 import ProductForm from './components/ProductForm';
@@ -11,8 +11,8 @@ import Settings from './components/Settings';
 import Customers from './components/Customers';
 import Warranties from './components/Warranties';
 import CustomerDetail from './components/CustomerDetail';
-import Login from './pages/Login';
-import { supabase } from './integrations/supabase/client';
+import Login from './src/pages/Login'; // Corrected import path
+import { supabase } from './src/integrations/supabase/client'; // Corrected import path
 import { toast } from 'react-hot-toast';
 
 // Main application component, now wrapped in SessionContextProvider
