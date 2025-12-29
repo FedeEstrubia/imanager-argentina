@@ -60,6 +60,16 @@ export const db = {
   // ⚙️ SETTINGS
   // ─────────────────────────────
   getSettings: async (): Promise<Settings> => {
+  // ✅ Verificar si Supabase está autenticando como 'anon'
+  const {
+    data: userData,
+    error: userError
+  } = await supabase.auth.getUser();
+
+  console.log('🧪 Current Supabase user:', userData?.user || 'anon');
+  console.log('🧪 Error in getUser():', userError);
+
+  // ✅ Obtener settings
   const { data, error } = await supabase
     .from('settings')
     .select('*')
@@ -69,7 +79,7 @@ export const db = {
   console.log('⚙️ GET SETTINGS > data:', data);
   console.log('⚙️ GET SETTINGS > error:', error);
 
-  if (error || !data || data.length === 0) {
+  if (!data || data.length === 0) {
     console.warn('No se encontraron settings, usando valores por defecto');
     return {
       usd_rate: 1000,
@@ -79,7 +89,7 @@ export const db = {
   }
 
   return data[0] as Settings;
-},
+};
 
 
   saveSettings: async (settings: Settings): Promise<void> => {
