@@ -78,8 +78,8 @@ export const db = {
   }
 
   return data as Settings;
-}
-}
+},
+
   saveSettings: async (settings: Settings): Promise<void> => {
     const { error } = await supabase
       .from('settings')
