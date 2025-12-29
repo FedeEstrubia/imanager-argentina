@@ -63,9 +63,9 @@ export const db = {
     const { data, error } = await supabase
       .from('settings')
       .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .single();
+.order('updated_at', { ascending: false })
+.limit(1)
+.maybeSingle();
 
     if (error) {
       console.error('Error al obtener configuración:', error.message);
