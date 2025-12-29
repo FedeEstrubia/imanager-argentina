@@ -43,19 +43,19 @@ const App: React.FC = () => {
     db.saveSettings(newSettings);
   };
 
-  const handleSaveProduct = (p: Partial<Product>) => {
-    let newProducts;
-    if (editingProduct) {
-      newProducts = products.map(item => item.id === editingProduct.id ? { ...item, ...p } as Product : item);
-    } else {
-      const newProduct = { ...p, id: Date.now().toString() } as Product;
-      newProducts = [...products, newProduct];
-    }
-    setProducts(newProducts);
-    db.saveProducts(newProducts);
-    setEditingProduct(null);
-    setView('inventory');
-  };
+  const handleSaveProduct = async (p: Partial<Product>) => {
+  let newProducts;
+  if (editingProduct) {
+    newProducts = products.map(item => item.id === editingProduct.id ? { ...item, ...p } as Product : item);
+  } else {
+    const newProduct = { ...p, id: Date.now().toString() } as Product;
+    newProducts = [...products, newProduct];
+  }
+  setProducts(newProducts);
+  await db.saveProducts(newProducts); // <- ahora es async
+  setEditingProduct(null);
+  setView('inventory');
+};
 
   const handleSaveCustomer = (c: Partial<Customer>) => {
     let newCustomers;
