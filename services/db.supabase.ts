@@ -60,26 +60,48 @@ export const db = {
   // ⚙️ SETTINGS
   // ─────────────────────────────
   getSettings: async (): Promise<Settings> => {
-  const { data, error } = await supabase
-    .from('settings')
-    .select('*')
-    .order('updated_at', { ascending: false })
-    .limit(1);
+  try {
+    // 🔍 Verificar si Supabase reconoce el usuario (debería ser anon)
+    const {
+      data: userData,
+      error: userError
+    } = await supabase.auth.getUser();
 
-  console.log('⚙️ GET SETTINGS > data:', data);
-  console.log('⚙️ GET SETTINGS > error:', error);
+    console.log('🧪 Current Supabase user:', userData?.user || 'anon');
+    console.log('🧪 Error in getUser():', userError);
 
-  if (error || !data || data.length === 0) {
-    console.warn('No se encontraron settings, usando valores por defecto');
+    // 📦 Obtener el setting más reciente
+    const { data, error } = await supabase
+      .from('settings')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    console.log('⚙️ GET SETTINGS > data:', data);
+    console.log('⚙️ GET SETTINGS > error:', error);
+
+    // 🧯 Fallback si no se encontró nada o hubo error
+    if (!data || data.length === 0 || error) {
+      console.warn('No se encontraron settings, usando valores por defecto');
+      return {
+        usd_rate: 1000,
+        updated_at: '',
+        default_warranty_days: 30,
+      };
+    }
+
+    return data[0] as Settings;
+
+  } catch (err) {
+    console.error('❌ Error inesperado al obtener settings:', err);
     return {
       usd_rate: 1000,
       updated_at: '',
-      default_warranty_days: 30
+      default_warranty_days: 30,
     };
   }
-
-  return data[0] as Settings;
 },
+
 
 
   saveSettings: async (settings: Settings): Promise<void> => {
