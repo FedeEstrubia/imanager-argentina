@@ -59,6 +59,7 @@ export const db = {
   // ────────────────────────────────────────────
   // ⚙️ SETTINGS
   // ────────────────────────────────────────────
+  
   getSettings: async (): Promise<Settings> => {
   const { data, error } = await supabase
     .from('settings')
