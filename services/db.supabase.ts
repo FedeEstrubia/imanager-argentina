@@ -60,24 +60,24 @@ export const db = {
   // ⚙️ SETTINGS
   // ─────────────────────────────
   getSettings: async (): Promise<Settings> => {
-    const { data, error } = await supabase
-      .from('settings')
-      const { data, error } = await supabase
-  .from('settings')
-  .select('*')
-  .order('updated_at', { ascending: false })
-  .limit(1);
+  const res = await supabase
+    .from('settings')
+    .select('*')
+    .order('updated_at', { ascending: false })
+    .limit(1);
 
-if (error || !data || data.length === 0) {
-  console.warn('No se encontraron settings, usando valores por defecto');
-  return {
-    usd_rate: 1000,
-    updated_at: '',
-    default_warranty_days: 30
-  };
-}
+  if (res.error || !res.data || res.data.length === 0) {
+    console.warn('No se encontraron settings, usando valores por defecto');
+    return {
+      usd_rate: 1000,
+      updated_at: '',
+      default_warranty_days: 30
+    };
+  }
 
-return data[0] as Settings;
+  return res.data[0] as Settings;
+},
+
 
     if (error || !data) {
       console.warn('No se encontraron settings, usando valores por defecto');
