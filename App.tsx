@@ -23,11 +23,15 @@ const App: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
-    setProducts(db.getProducts());
-    setSettings(db.getSettings());
-    setTransactions(db.getTransactions());
-    setCustomers(db.getCustomers());
-  }, []);
+  const loadData = async () => {
+    setProducts(await db.getProducts());
+    setSettings(await db.getSettings());
+    setTransactions(await db.getTransactions());
+    setCustomers(await db.getCustomers());
+  };
+
+  loadData();
+}, []);
 
   const handleUpdateSettings = (rate: number, warrantyDays: number) => {
     const newSettings = { 
