@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Product, Settings as SettingsType, Transaction, Customer } from './types';
-import { db } from './services/db';
+import { db } from './services/db.supabase';
 import Layout from './components/Layout';
 import Inventory from './components/Inventory';
 import ProductForm from './components/ProductForm';
